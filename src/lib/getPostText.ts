@@ -29,6 +29,7 @@ export default async function getPostText()
 	var stringArr = []; // Initialize an empty array that we will store the regexed plaintexts in.
 	var urlArr = [];
 	var altTextArr = [];
+	var cardArr = [];
 	for (let i = 0; i < limitVal; i++) // Iterate over all the posts we collected using the Mastodon API. 
 	{
 		if (objJSON[i]["media_attachments"][0] != undefined)
@@ -77,13 +78,17 @@ export default async function getPostText()
 		if (objJSON[i]["card"] != null)
 		{
 			contentString = contentString.replace(invalidLinkReg, objJSON[i]["card"]["url"]);
-			//var postCardArr = [];
-			//postCardArr.push(objJSON[i]["card"]["url"]);
-			//postCardArr.push(objJSON[i]["card"]["title"]);
-			//postCardArr.push(objJSON[i]["card"]["description"]);
-			//postCardArr.push(objJSON[i]["card"]["image"]);
-			//var postCard = postCardArr.join("!^&");
-			//cardArr.push(postCard);
+			var postCardArr = [];
+			postCardArr.push(objJSON[i]["card"]["url"]);
+			postCardArr.push(objJSON[i]["card"]["title"]);
+			postCardArr.push(objJSON[i]["card"]["description"]);
+			postCardArr.push(objJSON[i]["card"]["image"]);
+			var postCard = postCardArr.join("!^&");
+			cardArr.push(postCard);
+		}
+		else
+		{
+			cardArr.push("None");
 		}
 
 		stringArr.push(contentString); // Add the regexed content to the array of plaintexts.
@@ -91,7 +96,8 @@ export default async function getPostText()
 	var urls = urlArr.join("@#%");
 	var strings = stringArr.join("@#%"); // Turn the string array into a single string by joining them with a \/ delimiter. This will be undone when used by bot functions. 
 	var alts = altTextArr.join("@#%"); 
-	var urlsStringsAltsArr = [urls, strings, alts];
-	var urlsStringsAlts = urlsStringsAltsArr.join("~~~");
-	return urlsStringsAlts; // Return this singular concatenated string. 
+	var cards = cardArr.join("@#%");
+	var urlsStringsAltsCardsArr = [urls, strings, alts, cards];
+	var urlsStringsAltsCards = urlsStringsAltsCardsArr.join("~~~");
+	return urlsStringsAltsCards; // Return this singular concatenated string. 
 }

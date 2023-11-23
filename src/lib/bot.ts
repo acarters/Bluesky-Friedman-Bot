@@ -72,12 +72,29 @@ export default class Bot
   */
   async post
   (
-    isReply: boolean, url: string, alt: string, text:
+    isReply: boolean, url: string, alt: string, card: string, text:
       | string
       | (Partial<AppBskyFeedPost.Record> &
           Omit<AppBskyFeedPost.Record, "createdAt">)
   ) 
   {
+    var cards = card.split("!^&");
+    var cardEmbed;
+
+    if (card != "None" && url == "None")
+    {
+      var cardResponse = await axios.get(cards[3], { responseType: 'arraybuffer'});
+      var cardBuffer = Buffer.from(cardResponse.data, "utf-8");
+        if (cardBuffer.length > 1000000)
+        {
+          console.log("file too big");
+          cardResponse = await axios.get("https://www.wnct.com/wp-content/uploads/sites/99/2022/12/Hurricanes-Stadium-Series-Logo.png", { responseType: 'arraybuffer'}); 
+          cardBuffer = Buffer.from(cardResponse.data, "utf-8");
+        }
+        const cardUpload = await this.#agent.uploadBlob(cardBuffer, {encoding: "image/png"});
+        var cardObj = {"uri": cards[0], "title": cards[1], "description": cards[2], "thumb": cardUpload["data"]["blob"],};
+        cardEmbed = {"$type": "app.bsky.embed.external", "external": cardObj};
+    }
     var img;
     if (url != "None")
     {
@@ -148,6 +165,18 @@ export default class Bot
             embed: img,
           };
         }
+        else if (card != "None")
+        {
+          record = 
+          {
+            text: richText.text, // Specify the text of our post as the text in the RichText obj (should be our plaintext string)
+            facets: richText.facets, // Specify the facets of our post to be the facets of the RichText.
+            reply: {root: rootId, parent: parentId,}, // Specify the reply details. Make the root the values from our public root variables, make the parent the ID values collected from this function (the ones from the most recent post)
+            embed: cardEmbed,
+          }; 
+          console.log("record with card");
+          console.log(record);
+        }
         else
         {
           record = 
@@ -168,6 +197,18 @@ export default class Bot
             facets: richText.facets, // Specify the facets of our post to be the facets of the RichText.
             embed: img,
           };
+        }
+        else if (card != "None")
+        {
+          console.log("there is a card.");
+          record = 
+          {
+            text: richText.text, // Specify the text of our post as the text in the RichText obj (should be our plaintext string)
+            facets: richText.facets, // Specify the facets of our post to be the facets of the RichText.
+            embed: cardEmbed,
+          };
+          console.log("record with card");
+          console.log(record);
         }
         else
         {
@@ -209,10 +250,11 @@ export default class Bot
     await bot.login(bskyAccount); // Log the bot into the specified Bluesky account determined by the bskyAccount value.
     const mastodonAwait = await getPostText(); // Get the desired number of recent Mastodon posts from the specified user in getPostText.
 
-    var urlsStringsAltsArr = mastodonAwait.split("~~~");
-    var mastUrlArr = urlsStringsAltsArr[0].split("@#%");
-    var mastodonArr = urlsStringsAltsArr[1].split("@#%");
-    var mastAltArr = urlsStringsAltsArr[2].split("@#%");
+    var urlsStringsAltsCardsArr = mastodonAwait.split("~~~");
+    var mastUrlArr = urlsStringsAltsCardsArr[0].split("@#%");
+    var mastodonArr = urlsStringsAltsCardsArr[1].split("@#%");
+    var mastAltArr = urlsStringsAltsCardsArr[2].split("@#%");
+    var mastCardArr = urlsStringsAltsCardsArr[3].split("@#%");
     console.log(mastAltArr);
 
     if (!dryRun) // Make sure that we don't wanna run the bot without posting. Tbh, I think I might have broken this feature through my changes to the source code. May need to reimplement dry run as a working option when I generalize the code for other purposes.
@@ -221,7 +263,7 @@ export default class Bot
       {
         if (mastodonArr[i].length <= 300) // Simple case, where a post is 300 characters or less, within the length bounds of a Bluesky post.
         {
-          await bot.post(false, mastUrlArr[i], mastAltArr[i], mastodonArr[i]); // Run bot.post on this text value, posting to Bluesky if the text is new. Post this as a root value. // Run bot.post on this text value, posting to Bluesky if the text is new. Post this as a root value.
+          await bot.post(false, mastUrlArr[i], mastAltArr[i], mastCardArr[i], mastodonArr[i]); // Run bot.post on this text value, posting to Bluesky if the text is new. Post this as a root value. // Run bot.post on this text value, posting to Bluesky if the text is new. Post this as a root value.
         }
         else // Complicated case where a post is longer than 300 characters, longer than a valid Bluesky post. 
         {
@@ -250,7 +292,7 @@ export default class Bot
           var isReply = false; // Create a boolean value to determine if we want to post a root post or a reply. Start with a root post. 
           for (var j = 0; j < threadArr.length; j++) // Iterate over all of the chunk strings contained in the thread array.
           {
-            await bot.post(isReply, mastUrlArr[i], mastAltArr[i], threadArr[j] + " [" + (j+1) + "/" + threadArr.length + "]"); // Post string j in the thread array. Use the boolean variable to determine whether this is a root post or a reply, add a post counter on the end to make the thread easier to read. 
+            await bot.post(isReply, mastUrlArr[i], mastAltArr[i], mastCardArr[i], threadArr[j] + " [" + (j+1) + "/" + threadArr.length + "]"); // Post string j in the thread array. Use the boolean variable to determine whether this is a root post or a reply, add a post counter on the end to make the thread easier to read. 
             if (isReply == false) // If this post was posted as a root, meaning that this is the first iteration:
             {
               isReply = true; // Set the boolean value to post as replies for the remaining iterations.
