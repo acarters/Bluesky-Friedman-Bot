@@ -91,7 +91,7 @@ export default class Bot
         if (cardBuffer.length > 1000000)
         {
           console.log("file too big");
-          cardResponse = await axios.get("https://www.wnct.com/wp-content/uploads/sites/99/2022/12/Hurricanes-Stadium-Series-Logo.png", { responseType: 'arraybuffer'}); 
+          cardResponse = await axios.get("https://www.sportsnet.ca/wp-content/uploads/2020/03/1704050871_6140634293001_6140631802001-vs.jpg", { responseType: 'arraybuffer'}); 
           cardBuffer = Buffer.from(cardResponse.data, "utf-8");
         }
         const cardUpload = await this.#agent.uploadBlob(cardBuffer, {encoding: "image/png"});
