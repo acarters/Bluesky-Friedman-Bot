@@ -21,6 +21,7 @@ export default async function getPostText()
 	var twitterReg = new RegExp("@twitter.com", "g"); // A regex to deal with @twitter.com. Should be deleted.
 	var canesReg = new RegExp("@Canes@sportsbots.xyz", "g"); // A regex to deal with Canes's @. Should be replaced with the bot's @.
 	var sportsBotsReg = new RegExp("@sportsbots.xyz", "g");
+	var invalidLinkReg = new RegExp("\\S*(\\.com|\\.ca|\\.org|\\.net)\\S*(…|\\.\\.\\.)", "g");
 	var logoReg = new RegExp("&nbsp;", "g"); // A regex to deal with &nbsp;. Should be deleted.
 	var awaitTweet = await mastodon.getStatuses("109617175461045229", {'limit':limitVal}); //Use the Mastodon API to get a specified number of recent posts from the Mastodon API.
 	var string = JSON.stringify(awaitTweet); // Convert the post into a JSON string.
@@ -72,6 +73,19 @@ export default async function getPostText()
 		console.log("contentString: " + contentString);
 		contentString = contentString.slice(1,-1); // Remove the quotation marks.
 		contentString = contentString.replace(logoReg, "").replace(twitterReg, "").replace(canesReg, "notcanes.bsky.social").replace(sportsBotsReg, "").replace(quoteReg, `"`).replace(andReg, "&").replace(pReg, "\n\n").replace(brReg, "\n").replace(tagReg, ""); //Use the ", &, <p>, and <br> regexes to apply appropriate formatting. Then use the general regex to remove the HTML formatting from the mastodon post. 
+
+		if (objJSON[i]["card"] != null)
+		{
+			contentString = contentString.replace(invalidLinkReg, objJSON[i]["card"]["url"]);
+			//var postCardArr = [];
+			//postCardArr.push(objJSON[i]["card"]["url"]);
+			//postCardArr.push(objJSON[i]["card"]["title"]);
+			//postCardArr.push(objJSON[i]["card"]["description"]);
+			//postCardArr.push(objJSON[i]["card"]["image"]);
+			//var postCard = postCardArr.join("!^&");
+			//cardArr.push(postCard);
+		}
+
 		stringArr.push(contentString); // Add the regexed content to the array of plaintexts.
 	}
 	var urls = urlArr.join("@#%");
