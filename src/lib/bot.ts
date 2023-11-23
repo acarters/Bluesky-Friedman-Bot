@@ -78,10 +78,13 @@ export default class Bot
           Omit<AppBskyFeedPost.Record, "createdAt">)
   ) 
   {
+    var img;
+    var urls = url.split("!^&");
+    var alts = alt.split("!^&");
     var cards = card.split("!^&");
     var cardEmbed;
 
-    if (card != "None" && url == "None")
+    if (card != "None" && urls[0] == "None")
     {
       var cardResponse = await axios.get(cards[3], { responseType: 'arraybuffer'});
       var cardBuffer = Buffer.from(cardResponse.data, "utf-8");
@@ -95,21 +98,40 @@ export default class Bot
         var cardObj = {"uri": cards[0], "title": cards[1], "description": cards[2], "thumb": cardUpload["data"]["blob"],};
         cardEmbed = {"$type": "app.bsky.embed.external", "external": cardObj};
     }
-    var img;
-    if (url != "None")
+
+    for (var i = 0; i < 4; i++)
     {
-      const response = await axios.get(url, { responseType: 'arraybuffer' })
-      const buffer = Buffer.from(response.data, "utf-8")
-      if (buffer.length <= 1000000)
+      if (urls[i] != "None")
       {
-        const testUpload = await this.#agent.uploadBlob(buffer, {encoding: "image/png"});
-        img = {images: [{image: testUpload["data"]["blob"], alt: "",},], $type: "app.bsky.embed.images",};
-        if (alt != "None")
+        var response = await axios.get(urls[i], { responseType: 'arraybuffer'});
+        var buffer = Buffer.from(response.data, "utf-8");
+        if (buffer.length <= 1000000)
         {
-          img["images"][0]["alt"] = alt;
+          const upload = await this.#agent.uploadBlob(buffer, {encoding: "image/png"});
+          if (img == undefined)
+          {
+            if (alts[i] != "None")
+            {
+              img = {images: [{image: upload["data"]["blob"], alt: alts[i],},], $type: "app.bsky.embed.images",};
+            }
+            else
+            {
+              img = {images: [{image: upload["data"]["blob"], alt: "",},], $type: "app.bsky.embed.images",};
+            }
+          }
+          else 
+          {
+            if (alts[i] != "None")
+            {
+              img["images"].push({image: upload["data"]["blob"], alt: alts[i],});
+            }
+            else
+            {
+              img["images"].push({image: upload["data"]["blob"], alt: "",});
+            }
+          }
         }
       }
-      console.log(img);
     }
 
     var postNum = 20; // Specify the number of recent posts to compare from the logged in user's feed.
@@ -139,8 +161,6 @@ export default class Bot
       var bskyPost = bskyFeed[i]; // Get the post i from the collected Bluesky feed.
       var bskyRecord = bskyPost["post"]["record"]; // Filter post i down so we are only considering the record.
       var bskyText = Object.entries(bskyRecord)[0][1]; // Accessing the values from here is weird, so I put them all in an array and access the one corresponding to text (0,1).
-      console.log(text);
-      console.log(bskyText);
       if (text === bskyText || text === "") // Check if the text we are trying to post has already been posted in the last postNum posts, or is empty. Might change empty conditional if I get images working.  
       {
         console.log("failed on case " + i);
@@ -155,7 +175,7 @@ export default class Bot
       if (isReply == true) // If we are trying to post a reply
       {
         var rootId = {uri: this.rootUri, cid: this.rootCid}; // Format the root URI and root CID from the public object variables into a form that can be used.
-        if (url != "None")
+        if (urls[0] != "None")
         {
           record = 
           {
@@ -174,8 +194,6 @@ export default class Bot
             reply: {root: rootId, parent: parentId,}, // Specify the reply details. Make the root the values from our public root variables, make the parent the ID values collected from this function (the ones from the most recent post)
             embed: cardEmbed,
           }; 
-          console.log("record with card");
-          console.log(record);
         }
         else
         {
@@ -189,7 +207,7 @@ export default class Bot
       }
       else // If we are trying to post a root post
       {
-        if (url != "None")
+        if (urls[0] != "None")
         {
           record = 
           {
@@ -200,15 +218,12 @@ export default class Bot
         }
         else if (card != "None")
         {
-          console.log("there is a card.");
           record = 
           {
             text: richText.text, // Specify the text of our post as the text in the RichText obj (should be our plaintext string)
             facets: richText.facets, // Specify the facets of our post to be the facets of the RichText.
             embed: cardEmbed,
           };
-          console.log("record with card");
-          console.log(record);
         }
         else
         {
@@ -255,7 +270,6 @@ export default class Bot
     var mastodonArr = urlsStringsAltsCardsArr[1].split("@#%");
     var mastAltArr = urlsStringsAltsCardsArr[2].split("@#%");
     var mastCardArr = urlsStringsAltsCardsArr[3].split("@#%");
-    console.log(mastAltArr);
 
     if (!dryRun) // Make sure that we don't wanna run the bot without posting. Tbh, I think I might have broken this feature through my changes to the source code. May need to reimplement dry run as a working option when I generalize the code for other purposes.
     { 
