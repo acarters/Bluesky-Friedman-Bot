@@ -86,6 +86,7 @@ export default class Bot
 
     if (card != "None" && urls[0] == "None")
     {
+      console.log("card != None, url == None");
       var cardResponse = await axios.get(cards[3], { responseType: 'arraybuffer'});
       var cardBuffer = Buffer.from(cardResponse.data, "utf-8");
         if (cardBuffer.length > 1000000)
@@ -97,12 +98,15 @@ export default class Bot
         const cardUpload = await this.#agent.uploadBlob(cardBuffer, {encoding: "image/png"});
         var cardObj = {"uri": cards[0], "title": cards[1], "description": cards[2], "thumb": cardUpload["data"]["blob"],};
         cardEmbed = {"$type": "app.bsky.embed.external", "external": cardObj};
+        console.log("cardEmbed:");
+        console.log(cardEmbed);
     }
 
     for (var i = 0; i < 4; i++)
     {
       if (urls[i] != "None")
       {
+        console.log("urls["+ i + "] != None");
         var response = await axios.get(urls[i], { responseType: 'arraybuffer'});
         var buffer = Buffer.from(response.data, "utf-8");
         if (buffer.length <= 1000000)
@@ -155,6 +159,8 @@ export default class Bot
         this.rootUri = bskyUri; // Change the root URI to be the most recent post's URI.
         this.rootCid = bskyCid; // Change the root CID to be the most recent post's CID.
       }
+      console.log("This is a reply. Uri: " + this.rootUri);
+      console.log("This is a reply. Cid: " + this.rootCid);
     }
     for (let i = 0; i < bskyFeed.length; i++) // Consider all collected posts.
     {
@@ -234,6 +240,7 @@ export default class Bot
           }; 
         }
       }
+      console.log(record);
       return this.#agent.post(record); // Post the record we have specified using the Bluesky agent, return the output from doing this.
     }
     else // If we are trying to post text not in the format of a string. Shouldn't happen in this unmodified codebase, I don't think
@@ -303,15 +310,20 @@ export default class Bot
           }
           chunkStr = chunkArr.join(" "); // Turn the last chunk into a string by delimiting the words with spaces.
           threadArr.push(chunkStr); // Add the last chunk string to the thread array.
+          console.log("threadArr:");
+          console.log(threadArr);
           var isReply = false; // Create a boolean value to determine if we want to post a root post or a reply. Start with a root post. 
           for (var j = 0; j < threadArr.length; j++) // Iterate over all of the chunk strings contained in the thread array.
           {
+            console.log("posting " + j + ": " + threadArr[j]);
             await bot.post(isReply, mastUrlArr[i], mastAltArr[i], mastCardArr[i], threadArr[j] + " [" + (j+1) + "/" + threadArr.length + "]"); // Post string j in the thread array. Use the boolean variable to determine whether this is a root post or a reply, add a post counter on the end to make the thread easier to read. 
+            console.log("posted! ");
             if (isReply == false) // If this post was posted as a root, meaning that this is the first iteration:
             {
               isReply = true; // Set the boolean value to post as replies for the remaining iterations.
-              mastUrlArr[i] = "None";
-              mastAltArr[i] = "None";
+              console.log(mastUrlArr[i]);
+              mastUrlArr[i] = "None!^&None!^&None!^&None";
+              mastAltArr[i] = "None!^&None!^&None!^&None";
             }
           }
         }
