@@ -88,10 +88,39 @@ export default async function getPostText()
 		{
 			contentString = contentString.replace(invalidLinkReg, objJSON[i]["card"]["url"]);
 			var postCardArr = [];
-			postCardArr.push(objJSON[i]["card"]["url"]);
-			postCardArr.push(objJSON[i]["card"]["title"]);
-			postCardArr.push(objJSON[i]["card"]["description"]);
-			postCardArr.push(objJSON[i]["card"]["image"]);
+			if (objJSON[i]["card"]["url"] != null)
+			{
+				postCardArr.push(objJSON[i]["card"]["url"]);
+			}
+			else
+			{
+				postCardArr.push("None");
+			}
+			if (objJSON[i]["card"]["title"] != null)
+			{
+				postCardArr.push(objJSON[i]["card"]["title"]);
+			}
+			else
+			{
+				postCardArr.push("None");
+			}
+			if (objJSON[i]["card"]["description"] != null)
+			{
+				postCardArr.push(objJSON[i]["card"]["description"]);
+			}
+			else
+			{
+				postCardArr.push("None");
+			}
+			if (objJSON[i]["card"]["image"] != null)
+			{
+				postCardArr.push(objJSON[i]["card"]["image"]);
+			}
+			else
+			{
+				postCardArr.push("None");
+			}
+			console.log("postCardArr: " + postCardArr);
 			var postCard = postCardArr.join("!^&");
 			cardArr.push(postCard);
 		}

@@ -86,13 +86,16 @@ export default class Bot
 
     if (card != "None" && urls[0] == "None")
     {
-      console.log("card != None, url == None");
+      var cardBuffer;
+      if (cards[3] != "None")
+      {
       var cardResponse = await axios.get(cards[3], { responseType: 'arraybuffer'});
-      var cardBuffer = Buffer.from(cardResponse.data, "utf-8");
-        if (cardBuffer.length > 1000000)
+      cardBuffer = Buffer.from(cardResponse.data, "utf-8");
+      }
+        if ((cardBuffer != undefined && cardBuffer.length > 1000000) || cards[3] == "None")
         {
-          console.log("file too big");
-          cardResponse = await axios.get("https://www.sportsnet.ca/wp-content/uploads/2020/03/1704050871_6140634293001_6140631802001-vs.jpg", { responseType: 'arraybuffer'}); 
+          console.log("file too big or no image supplied");
+          var cardResponse = await axios.get("https://www.sportsnet.ca/wp-content/uploads/2020/03/1704050871_6140634293001_6140631802001-vs.jpg", { responseType: 'arraybuffer'}); 
           cardBuffer = Buffer.from(cardResponse.data, "utf-8");
         }
         const cardUpload = await this.#agent.uploadBlob(cardBuffer, {encoding: "image/png"});
