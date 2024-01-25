@@ -78,19 +78,24 @@ export default class Bot
           Omit<AppBskyFeedPost.Record, "createdAt">)
   ) 
   {
-    var img;
-    var urls = url.split("!^&");
-    var alts = alt.split("!^&");
-    var cards = card.split("!^&");
-    var cardEmbed;
+    var img; // Create a variable to contain the image data for this post. This will be defined as a dictionary later.
+    var urls = url.split("!^&"); // Parse the string of concatenated urls into an array of individual urls.
+    var alts = alt.split("!^&"); // Parse the string of concatenated alt text values into an array of individual alt text values.
+    var cards = card.split("!^&"); // Parse the string of concatenated link card links into an array of individual link card links.
+    var cardEmbed; // Create a variable to store the link card embed object.
 
-    if (card != "None" && urls[0] == "None")
+    console.log("card: "); // Keeping these here for now for debug purposes.
+    console.log(card);
+    console.log("cards[0]: ");
+    console.log(cards[0]);
+
+    if (card != "None" && urls[0] == "None") // Check if there is a link card, and there's not at least one url. This might be implemented incorrectly.
     {
-      var cardBuffer;
+      var cardBuffer; 
       if (cards[3] != "None")
       {
-      var cardResponse = await axios.get(cards[3], { responseType: 'arraybuffer'});
-      cardBuffer = Buffer.from(cardResponse.data, "utf-8");
+        var cardResponse = await axios.get(cards[3], { responseType: 'arraybuffer'});
+        cardBuffer = Buffer.from(cardResponse.data, "utf-8");
       }
         if ((cardBuffer != undefined && cardBuffer.length > 1000000) || cards[3] == "None")
         {
@@ -101,8 +106,6 @@ export default class Bot
         const cardUpload = await this.#agent.uploadBlob(cardBuffer, {encoding: "image/png"});
         var cardObj = {"uri": cards[0], "title": cards[1], "description": cards[2], "thumb": cardUpload["data"]["blob"],};
         cardEmbed = {"$type": "app.bsky.embed.external", "external": cardObj};
-        console.log("cardEmbed:");
-        console.log(cardEmbed);
     }
 
     for (var i = 0; i < 4; i++)
@@ -162,8 +165,6 @@ export default class Bot
         this.rootUri = bskyUri; // Change the root URI to be the most recent post's URI.
         this.rootCid = bskyCid; // Change the root CID to be the most recent post's CID.
       }
-      console.log("This is a reply. Uri: " + this.rootUri);
-      console.log("This is a reply. Cid: " + this.rootCid);
     }
     for (let i = 0; i < bskyFeed.length; i++) // Consider all collected posts.
     {
