@@ -172,9 +172,6 @@ export default class Bot
       var bskyRecord = bskyPost["post"]["record"]; // Filter post i down so we are only considering the record.
       var bskyEntries = Object.entries(bskyRecord); // Accessing the values from here is weird, so I put them all in an array and access the one corresponding to text (0,1).
       var bskyText = bskyEntries[bskyEntries.length - 1][1];
-      //console.log("text: " + text);
-      //console.log("bskyText:");
-      //console.log(bskyText);
       if (text === bskyText || text === "") // Check if the text we are trying to post has already been posted in the last postNum posts, or is empty. Might change empty conditional if I get images working.  
       {
         console.log("failed on case " + i);
